@@ -31,7 +31,7 @@ jobs:
             -e BUDS3_SIGNING_STORE=/signing/buds3lights.jks \
             -e BUDS3_SIGNING_PASSWORD \
             codeberg.org/freeyourgadget/android-fdroid-tools@sha256:344343fcf5ff939842b4ea36597a693f036dbe4c6fea787b8c97263877edf8ed \
-            -c 'git config --global --add safe.directory /workspace; ./gradlew --no-daemon --max-workers=2 :app:assembleMainlineNightly -Pbuds3LightsBuild -x test -x lint -x :app:lintVitalMainlineNightly -x :app:lintVitalAnalyzeMainlineNightly -x :app:lintVitalReportMainlineNightly --stacktrace'
+            -c 'git config --global --add safe.directory /workspace; ./gradlew --no-daemon --max-workers=2 :app:assembleMainlineNightly -Pbuds3LightsBuild -x test -x lint --stacktrace'
       - name: Prepare release assets
         run: |
           mkdir -p dist
