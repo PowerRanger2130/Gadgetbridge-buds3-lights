@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceScreen
+        android:icon="@drawable/ic_led_color"
+        android:key="prefs_galaxy_buds_3_pro_blade_lights"
+        android:persistent="false"
+        android:title="@string/galaxy_buds_3_pro_blade_lights">
+        <Preference
+            android:key="pref_galaxy_buds_3_pro_lights_on"
+            android:persistent="false"
+            android:title="@string/galaxy_buds_3_pro_lights_on"
+            android:summary="@string/galaxy_buds_3_pro_lights_on_summary" />
+        <Preference
+            android:key="pref_galaxy_buds_3_pro_lights_off"
+            android:persistent="false"
+            android:title="@string/galaxy_buds_3_pro_lights_off"
+            android:summary="@string/galaxy_buds_3_pro_lights_off_summary" />
+        <Preference
+            android:key="pref_galaxy_buds_3_pro_lights_state"
+            android:persistent="false"
+            android:selectable="false"
+            android:title="@string/galaxy_buds_3_pro_lights_state"
+            android:summary="@string/galaxy_buds_3_pro_lights_unknown" />
+    </PreferenceScreen>
     <ListPreference
         android:defaultValue="0"
         android:entries="@array/galaxy_buds_3_pro_noise_controls_options"

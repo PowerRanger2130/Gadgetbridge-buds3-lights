@@ -1,0 +1,54 @@
+Gadgetbridge Buds3 Pro blade lights experiment
+
+This is a focused patch of upstream Gadgetbridge from
+https://codeberg.org/Freeyourgadget/Gadgetbridge
+Base commit: 8f8a3264e60a140688ae0c6272742d15c1ce0bb4
+License: AGPL-3.0, unchanged. The complete corresponding source and a patch
+against the base commit accompany the APK in this release.
+
+Install
+The APK uses nodomain.freeyourgadget.gadgetbridge.buds3lights, so it can be
+installed alongside upstream Gadgetbridge. It uses this fork's dedicated
+signing key, not upstream's certificate. Later builds from this repository
+use the same key. Its database and device preferences are separate.
+
+Connect the Galaxy Buds3 Pro in this app, open their device settings, then
+Blade lights. Avoid two manager apps trying to control the same earbuds
+at once. No phone installation or Bluetooth changes were automated.
+
+Controls
+- Turn off sends Samsung's notification command 0x8E with payload 00.
+- Turn on (experimental) sends 0x8E with payload 01.
+- Last reported blade light state shows only an incoming, checksum-valid
+  device report and its timestamp. Sending a command does not set it to On.
+- Existing lighting styles remain under the touch-control settings. Their
+  wire values are corrected while preserving stored UI choices.
+
+Protocol evidence
+Samsung Buds3 Pro Manager com.samsung.accessory.paranmgr 8.5.26070351 uses
+0x8E 00 for its lights-off notification. Its incoming handler calls this ID
+TWU_MSG_ID_BUDS_LIGHTING_SYNC: 0=off, 1=on, 2/3=low battery warning.
+The app has no observed send path for 0x8E 01. Firmware support for sending
+01 is unverified. This build makes that experiment available; compilation
+or a generic protocol acknowledgement does not establish LED activation.
+
+Full frames:
+Off: FD 04 00 8E 00 97 38 DD
+On:  FD 04 00 8E 01 B6 28 DD
+Only the GALAXY_BUDS3_PRO device type can send these actions.
+No light command is persisted or replayed automatically on connection.
+
+First hardware check
+Keep both earbuds outside the case and your ears, each above 30% battery.
+First turn the lights on using the normal pinch-and-hold gesture, then
+try Turn off. Next try Turn on (experimental) with the lights off.
+Check the physical LEDs and the last reported state separately.
+If On is ignored, record the firmware version and Gadgetbridge log.
+Do not assume changing lighting style alone powers the LEDs on.
+
+Build
+GitHub Actions builds only the mainline nightly Android APK using upstream's
+Android tools image. Tests and lint do not run in this build workflow.
+Signing credentials are stored as repository secrets. No release build is
+performed on the development machine. No website, updater server, or backend
+deployment is configured for this experimental fork.

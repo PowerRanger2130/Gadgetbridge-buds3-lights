@@ -1,0 +1,54 @@
+name: Buds3 Pro lights APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.BUDS3_SIGNING_KEYSTORE }}
+        run: |
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/buds3lights.jks"
+      - name: Build signed APK
+        env:
+          BUDS3_SIGNING_PASSWORD: ${{ secrets.BUDS3_SIGNING_PASSWORD }}
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -v "$RUNNER_TEMP/buds3lights.jks:/signing/buds3lights.jks:ro" \
+            -w /workspace \
+            -e BUDS3_SIGNING_STORE=/signing/buds3lights.jks \
+            -e BUDS3_SIGNING_PASSWORD \
+            codeberg.org/freeyourgadget/android-fdroid-tools:37.0.0-0 \
+            bash -c 'git config --global --add safe.directory /workspace; ./gradlew --no-daemon --max-workers=2 :app:assembleMainlineNightly -Pbuds3LightsBuild -x test -x lint --stacktrace'
+      - name: Prepare release assets
+        run: |
+          mkdir -p dist
+          mapfile -t apks < <(find app/build/outputs/apk/mainline/nightly -maxdepth 1 -name '*.apk')
+          test "${#apks[@]}" -eq 1
+          cp "${apks[0]}" dist/Gadgetbridge-buds3-lights.apk
+          cp docs/buds3-pro-lights.txt dist/buds3-pro-lights.txt
+          git diff 8f8a3264e60a140688ae0c6272742d15c1ce0bb4 HEAD -- app > dist/buds3-pro-lights.patch
+          git archive --format=tar.gz --prefix=Gadgetbridge-buds3-lights/ HEAD > dist/Gadgetbridge-buds3-lights-source.tar.gz
+          cd dist
+          sha256sum Gadgetbridge-buds3-lights.apk > SHA256SUMS
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="buds3-lights-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" dist/* \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "Buds3 Pro blade lights experiment ${GITHUB_RUN_NUMBER}" \
+            --notes-file docs/buds3-pro-lights.txt

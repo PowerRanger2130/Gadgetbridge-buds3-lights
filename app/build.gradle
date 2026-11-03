@@ -155,6 +155,14 @@ android {
     }
 
     signingConfigs {
+        buds3Lights {
+            if (System.getenv("BUDS3_SIGNING_STORE") != null) {
+                storeFile file(System.getenv("BUDS3_SIGNING_STORE"))
+                storePassword System.getenv("BUDS3_SIGNING_PASSWORD")
+                keyAlias "buds3lights"
+                keyPassword System.getenv("BUDS3_SIGNING_PASSWORD")
+            }
+        }
         nightly {
             if (System.getProperty("nightly_store_file") != null) {
                 storeFile file(System.getProperty("nightly_store_file"))
@@ -226,6 +234,11 @@ android {
                 signingConfig = signingConfigs.nightly
             } else {
                 signingConfig = signingConfigs.debug
+            }
+            if (providers.gradleProperty("buds3LightsBuild").isPresent()) {
+                applicationIdSuffix ".buds3lights"
+                versionNameSuffix "-buds3lights-${getGitHashShort()}"
+                signingConfig = signingConfigs.buds3Lights
             }
         }
 

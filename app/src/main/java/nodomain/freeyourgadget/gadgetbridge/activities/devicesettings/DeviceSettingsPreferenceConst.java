@@ -486,6 +486,10 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_GALAXY_BUDS_3_PRO_ANSWER_CALL="pref_galaxy_buds_3_pro_answer_call";
     public static final String PREF_GALAXY_BUDS_3_PRO_DECLINE_CALL="pref_galaxy_buds_3_pro_decline_call";
     public static final String PREF_GALAXY_BUDS_3_PRO_EARBUD_LIGHTS="pref_galaxy_buds_3_pro_earbud_lights";
+    public static final String PREF_GALAXY_BUDS_3_PRO_LIGHTS_ON = "pref_galaxy_buds_3_pro_lights_on";
+    public static final String PREF_GALAXY_BUDS_3_PRO_LIGHTS_OFF = "pref_galaxy_buds_3_pro_lights_off";
+    public static final String PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE = "pref_galaxy_buds_3_pro_lights_state";
+    public static final String PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE_TIME = "pref_galaxy_buds_3_pro_lights_state_time";
     
     // Galaxy Buds3 Pro checkbox-based noise control switching (left earbud)
     public static final String PREF_GALAXY_BUDS_TOUCH_LEFT_SWITCH_ANC="pref_galaxy_buds_touch_left_switch_anc";

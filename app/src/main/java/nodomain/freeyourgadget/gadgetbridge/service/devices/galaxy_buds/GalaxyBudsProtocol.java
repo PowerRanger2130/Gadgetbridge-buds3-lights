@@ -41,6 +41,7 @@ import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSett
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEvent;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventBatteryInfo;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventVersionInfo;
+import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventUpdatePreferences;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.BatteryState;
 import nodomain.freeyourgadget.gadgetbridge.model.DeviceType;
@@ -66,6 +67,10 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
     private static final byte battery_status = (byte) 0x60;
 
     private static final byte battery_status2 = (byte) 0x61;
+
+    // Samsung's TWU_MSG_ID_BUDS_LIGHTING_SYNC. Sending 0 is the official
+    // notification's off action; sending 1 is experimental. Received 1 means on.
+    private static final byte buds3_lighting_sync = (byte) 0x8e;
 
     //outgoing
     private static final byte find_device_start = (byte) 0xa0;
@@ -175,6 +180,10 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
 
     @Override
     public GBDeviceEvent[] decodeResponse(byte[] responseData) {
+        if (getDevice().getType() == DeviceType.GALAXY_BUDS3_PRO
+                && responseData.length >= 4 && responseData[3] == buds3_lighting_sync) {
+            return decodeBladeLights(responseData);
+        }
         List<GBDeviceEvent> devEvts = new ArrayList<>();
         LOG.debug("received data: " + hexdump(responseData));
         LOG.debug("received data length: " + responseData.length);
@@ -225,6 +234,29 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
 
         }
         return devEvts.toArray(new GBDeviceEvent[devEvts.size()]);
+    }
+
+    private GBDeviceEvent[] decodeBladeLights(final byte[] frame) {
+        // Do not report a requested state as success. Only accept a complete,
+        // checksum-valid state notification from the earbuds.
+        if (frame.length != 8 || frame[0] != SOM_BUDS_PLUS
+                || (frame[1] & 0xff) != 4 || frame[2] != 0
+                || frame[7] != EOM_BUDS_PLUS) {
+            LOG.warn("Invalid Buds3 Pro lighting frame");
+            return new GBDeviceEvent[0];
+        }
+        final int expectedCrc = crc16_ccitt(new byte[]{buds3_lighting_sync, frame[4]}) & 0xffff;
+        final int receivedCrc = (frame[5] & 0xff) | ((frame[6] & 0xff) << 8);
+        final int state = frame[4] & 0xff;
+        if (expectedCrc != receivedCrc || state > 3) {
+            LOG.warn("Invalid Buds3 Pro lighting state or checksum");
+            return new GBDeviceEvent[0];
+        }
+        LOG.info("Buds3 Pro reported blade light state: {}", state);
+        return new GBDeviceEvent[]{new GBDeviceEventUpdatePreferences(
+                DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE, state)
+                .withPreference(DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE_TIME,
+                        System.currentTimeMillis())};
     }
 
 
@@ -343,6 +375,15 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
     @Override
     public byte[] encodeSendConfiguration(String config) {
 
+        if (DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_ON.equals(config)
+                || DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_OFF.equals(config)) {
+            if (getDevice().getType() != DeviceType.GALAXY_BUDS3_PRO) {
+                return null;
+            }
+            final boolean on = DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_ON.equals(config);
+            return encodeMessage(buds3_lighting_sync, on ? (byte) 1 : (byte) 0);
+        }
+
         SharedPreferences prefs = GBApplication.getDeviceSpecificSharedPrefs(getDevice().getAddress());
 
         switch (config) {
@@ -454,9 +495,10 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
                 // Byte 7: Swipe up/down for volume
                 touchPayload[7] = (byte) (mediaControlsOn ? 0x01 : 0x00);
                 
-                // Byte 8: Earbud lights mode (0=?, 1=steady, 2=blinking, 3=fade)
+                // Keep existing stored UI values: 0=blinking, 1=fade, 2=steady.
+                // Samsung's wire values are 2=blinking, 3=fade, 1=steady.
                 String lightsMode = prefs.getString(DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_EARBUD_LIGHTS, "0");
-                touchPayload[8] = (byte) Integer.parseInt(lightsMode);
+                touchPayload[8] = (byte) ("0".equals(lightsMode) ? 2 : "1".equals(lightsMode) ? 3 : 1);
                 
                 // Byte 9: Quick launch advanced (unused for now)
                 touchPayload[9] = (byte) 0x00;

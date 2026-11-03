@@ -38,6 +38,10 @@ import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.Dev
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_DECLINE_CALL;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_EARBUD_LIGHTS;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_ANC_LEVEL;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_ON;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_OFF;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE_TIME;
 
 import android.os.Parcel;
 
@@ -45,7 +49,11 @@ import androidx.preference.Preference;
 
 import java.util.Collections;
 import java.util.Set;
+import java.text.DateFormat;
+import java.util.Date;
 
+import nodomain.freeyourgadget.gadgetbridge.GBApplication;
+import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsCustomizer;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsHandler;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -61,10 +69,46 @@ public class GalaxyBudsSettingsCustomizer implements DeviceSpecificSettingsCusto
 
     @Override
     public void onPreferenceChange(final Preference preference, final DeviceSpecificSettingsHandler handler) {
+        updateBladeLightState(handler);
+    }
+
+    @Override
+    public void onDeviceChanged(final DeviceSpecificSettingsHandler handler) {
+        updateBladeLightState(handler);
+    }
+
+    private void updateBladeLightState(final DeviceSpecificSettingsHandler handler) {
+        final Preference statePreference = handler.findPreference(PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE);
+        if (statePreference == null) {
+            return;
+        }
+        final Prefs prefs = new Prefs(GBApplication.getDeviceSpecificSharedPrefs(device.getAddress()));
+        final int state = prefs.getInt(PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE, -1);
+        final long time = prefs.getLong(PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE_TIME, 0);
+        if (state < 0 || state > 3 || time == 0) {
+            statePreference.setSummary(R.string.galaxy_buds_3_pro_lights_unknown);
+            return;
+        }
+        final int label = state == 0 ? R.string.galaxy_buds_3_pro_lights_state_off
+                : state == 1 ? R.string.galaxy_buds_3_pro_lights_state_on
+                : R.string.galaxy_buds_3_pro_lights_state_battery;
+        statePreference.setSummary(handler.getContext().getString(
+                R.string.galaxy_buds_3_pro_lights_state_at, handler.getContext().getString(label),
+                DateFormat.getDateTimeInstance().format(new Date(time))));
     }
 
     @Override
     public void customizeSettings(final DeviceSpecificSettingsHandler handler, Prefs prefs, final String rootKey) {
+        for (final String key : new String[]{PREF_GALAXY_BUDS_3_PRO_LIGHTS_ON, PREF_GALAXY_BUDS_3_PRO_LIGHTS_OFF}) {
+            final Preference action = handler.findPreference(key);
+            if (action != null) {
+                action.setOnPreferenceClickListener(preference -> {
+                    handler.notifyPreferenceChanged(key);
+                    return true;
+                });
+            }
+        }
+        updateBladeLightState(handler);
         final Preference pref_galaxy_buds_pro_balance = handler.findPreference(PREF_GALAXY_BUDS_PRO_BALANCE);
         if (pref_galaxy_buds_pro_balance != null) {
             pref_galaxy_buds_pro_balance.setSummary(String.valueOf((prefs.getInt(PREF_GALAXY_BUDS_PRO_BALANCE, 16) - 16)));
