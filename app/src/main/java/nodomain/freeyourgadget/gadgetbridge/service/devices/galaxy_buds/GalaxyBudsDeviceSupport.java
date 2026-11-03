@@ -116,6 +116,13 @@ public class GalaxyBudsDeviceSupport extends AbstractHeadphoneSerialDeviceSuppor
                 case "sweep_all":
                     for (int i = 0; i <= 255; i++) frames.add(Buds3LightDiagnostics.frame(0x8e, new byte[]{(byte) i}, 0));
                     break;
+                case "manager_samsung":
+                case "manager_other":
+                    final int sdk = Math.max(1, Math.min(255, request.getInt(Buds3LightDiagnostics.SDK, 35)));
+                    frames.add(Buds3LightDiagnostics.frame(0x88,
+                            new byte[]{1, (byte) ("manager_samsung".equals(experiment) ? 1 : 2), (byte) sdk}, 0));
+                    frames.add(on);
+                    break;
                 case "firmware":
                     frames.add(Buds3LightDiagnostics.frame(0x24, new byte[0], 0));
                     frames.add(Buds3LightDiagnostics.frame(0x28, new byte[0], 0));

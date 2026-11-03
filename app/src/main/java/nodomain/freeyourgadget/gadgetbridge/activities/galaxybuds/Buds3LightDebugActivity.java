@@ -6,6 +6,7 @@ import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
@@ -105,7 +106,7 @@ public class Buds3LightDebugActivity extends AbstractGBActivity {
 
         final LinearLayout experiments = section("Paced experiments", false);
         text(experiments, "One experiment at a time. Pending steps stop when you leave this screen, disconnect, or cancel. Stop on ON report is optional. Style experiments reapply your current Gadgetbridge touch-control settings. Already queued frames may still be delivered.");
-        experiment = spinner(experiments, new String[]{"Send ON three times", "OFF then ON", "Apply style then ON", "ON then apply style", "OFF, apply style, ON", "Sweep 8E values 00 through 0F", "Full 8E sweep 00 through FF, at least 4 minutes"});
+        experiment = spinner(experiments, new String[]{"Send ON three times", "OFF then ON", "Apply style then ON", "ON then apply style", "OFF, apply style, ON", "Sweep 8E values 00 through 0F", "Full 8E sweep 00 through FF, at least 4 minutes", "Samsung manager identity, then ON", "Other Android manager identity, then ON"});
         style = spinner(experiments, new String[]{"Blinking", "Fade", "Steady"});
         style.setSelection(Math.max(0, Math.min(2, Integer.parseInt(prefs.getString(DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_EARBUD_LIGHTS, "0")))));
         stopOn = new CheckBox(this);
@@ -114,7 +115,7 @@ public class Buds3LightDebugActivity extends AbstractGBActivity {
         experiments.addView(stopOn);
         delay = edit(experiments, "Spacing between frames, ms, 250 to 10000", "1000", true);
         button(experiments, "Run selected experiment", () -> {
-            final String[] actions = {"on3", "off_on", "style_on", "on_style", "off_style_on", "sweep", "sweep_all"};
+            final String[] actions = {"on3", "off_on", "style_on", "on_style", "off_style_on", "sweep", "sweep_all", "manager_samsung", "manager_other"};
             final String action = actions[experiment.getSelectedItemPosition()];
             if (action.contains("style")) {
                 prefs.edit().putString(DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_EARBUD_LIGHTS,
@@ -197,6 +198,7 @@ public class Buds3LightDebugActivity extends AbstractGBActivity {
             request.putInt(Buds3LightDiagnostics.FLAGS, prefs.getInt(Buds3LightDiagnostics.FLAGS, 0));
             request.putInt(Buds3LightDiagnostics.REPEAT, prefs.getInt(Buds3LightDiagnostics.REPEAT, 1));
             request.putInt(Buds3LightDiagnostics.DELAY, spacing);
+            request.putInt(Buds3LightDiagnostics.SDK, Build.VERSION.SDK_INT);
             request.putBoolean(Buds3LightDiagnostics.STOP_ON, stopOn == null || stopOn.isChecked());
             GBApplication.deviceService(device).onTestNewFunction(request);
         } catch (IllegalArgumentException exception) { toast(exception.getMessage()); }

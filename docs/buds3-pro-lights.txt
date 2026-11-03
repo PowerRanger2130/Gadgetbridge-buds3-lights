@@ -57,6 +57,8 @@ Open Buds3 Pro settings > Blade lights > Light debugger and packet capture.
 - Sweep 8E values 00..0F or the complete 00..FF range. Full sweeps use at
   least 1000 ms spacing. Pending sends can be cancelled. A new normal ON
   report stops a run by default; that stop condition can be disabled.
+- Try Samsung/other-Android manager identification at 88 before ON, using
+  the phone SDK value. This is a documented handshake experiment.
 - Query firmware/build information with existing read commands 24 and 28.
 - Copy, share, or save the report. Capture is bounded to 1200 entries and
   180000 characters, lives in memory, and reports dropped entries. Export
@@ -74,7 +76,7 @@ Useful first capture
    observations, device reports, ACKs and submitted commands.
 Keep both earbuds outside your ears and above 30% battery for the first run.
 The editor only targets lighting command 8E. Other available test commands
-are touch-settings 90 and firmware reads 24/28; no reset/FOTA opcode sweep.
+are touch-settings 90, manager identification 88 and firmware reads 24/28; no reset/FOTA opcode sweep.
 
 Update compatibility
 Package ID remains nodomain.freeyourgadget.gadgetbridge.buds3lights.
@@ -87,8 +89,21 @@ and the new version code is greater. The APK file hash changes normally.
 Phone installation is not claimed by this package-compatibility check.
 
 Build
-GitHub Actions builds only the mainline nightly Android APK using upstream's
+Blacksmith 2-vCPU runners in GitHub Actions build the mainline nightly APK
+using upstream's
 Android tools image. Tests and lint do not run in this build workflow.
 Signing credentials are stored as repository secrets. No release build is
 performed on the development machine. No website, updater server, or backend
 deployment is configured for this experimental fork.
+
+Delivery uses GitHub Release assets exclusively. No Actions artifacts are
+uploaded. The CI job runs on blacksmith-2vcpu-ubuntu-2404.
+
+Protocol research references
+https://github.com/timschneeb/GalaxyBudsClient/blob/master/GalaxyBudsClient/Message/SppMessageEnums.cs
+https://github.com/timschneeb/GalaxyBudsClient/blob/master/GalaxyBudsClient/Message/Decoder/GenericResponseDecoder.cs
+https://github.com/timschneeb/GalaxyBudsClient/blob/master/GalaxyBudsClient/Message/Decoder/AcknowledgementDecoder.cs
+https://github.com/timschneeb/GalaxyBudsClient/blob/master/GalaxyBudsClient/Message/Encoder/ManagerInfoEncoder.cs
+Samsung Manager 8.5.26070351 f8.C0817H independently uses command 88 with
+payload 01, device-type 01/02, Android SDK. Generic replies are 51 and 42,
+not an assumed command 00. ACK parameters are distinct from result codes.

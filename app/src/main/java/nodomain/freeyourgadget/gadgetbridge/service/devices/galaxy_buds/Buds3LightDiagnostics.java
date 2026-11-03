@@ -22,6 +22,7 @@ public final class Buds3LightDiagnostics {
     public static final String PAYLOAD = "buds3_debug_payload";
     public static final String FLAGS = "buds3_debug_flags";
     public static final String REPEAT = "buds3_debug_repeat";
+    public static final String SDK = "buds3_debug_sdk";
     public static final String STOP_ON = "buds3_debug_stop_on";
     public static final String DELAY = "buds3_debug_delay";
     public static final String EXPERIMENT = "buds3_debug_experiment";
@@ -97,7 +98,7 @@ public final class Buds3LightDiagnostics {
                 onReportCount++;
             }
         }
-        if ((frame[2] & 0x20) != 0 || command == 0) lastReply = description;
+        if ((frame[2] & 0x20) != 0 || command == 0x51 || command == 0x42) lastReply = description;
         if (capturing) {
             rxFrames++;
             append("RX FRAME " + description);
@@ -150,11 +151,12 @@ public final class Buds3LightDiagnostics {
     }
 
     public static byte[] frame(final int command, final byte[] payload, final int flags) {
-        if (command != 0x8e && command != 0x90 && command != 0x24 && command != 0x28) {
+        if (command != 0x8e && command != 0x90 && command != 0x24 && command != 0x28 && command != 0x88) {
             throw new IllegalArgumentException("Only lighting, touch settings and firmware-read commands are supported.");
         }
         if (flags != 0 && flags != 0x20) throw new IllegalArgumentException("Use request 00 or response 20 flags.");
-        if (payload.length > 32 || (command == 0x90 && payload.length != 10)
+        if ((command == 0x88 && (payload.length != 3 || payload[0] != 1 || (payload[1] != 1 && payload[1] != 2)))
+                || payload.length > 32 || (command == 0x90 && payload.length != 10)
                 || ((command == 0x24 || command == 0x28) && payload.length != 0)) {
             throw new IllegalArgumentException("Invalid payload length for this command.");
         }
@@ -179,8 +181,11 @@ public final class Buds3LightDiagnostics {
             final int state = payload[0] & 255;
             detail = frame[2] != 0 ? " response, meaning unverified" : state == 0 ? " lighting OFF"
                     : state == 1 ? " lighting ON report" : state == 2 || state == 3 ? " low-battery report" : " unknown lighting value";
-        } else if (id == 0 && payload.length >= 2) {
-            detail = String.format(Locale.ROOT, " ACK command=%02X result=%02X", payload[0] & 255, payload[1] & 255);
+        } else if (id == 0x51 && payload.length >= 2) {
+            detail = String.format(Locale.ROOT, " RESP command=%02X result=%02X", payload[0] & 255, payload[1] & 255);
+        } else if (id == 0x42 && payload.length >= 1) {
+            detail = String.format(Locale.ROOT, " ACK command=%02X parameters=[%s]", payload[0] & 255,
+                    hex(Arrays.copyOfRange(payload, 1, payload.length)));
         }
         return String.format(Locale.ROOT, "id=%02X flags=%02X payload=[%s]%s | %s", id, frame[2] & 255, hex(payload), detail, hex(frame));
     }
