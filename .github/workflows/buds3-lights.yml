@@ -43,6 +43,17 @@ jobs:
           git archive --format=tar.gz --prefix=Gadgetbridge-buds3-lights/ HEAD > dist/Gadgetbridge-buds3-lights-source.tar.gz
           cd dist
           sha256sum Gadgetbridge-buds3-lights.apk > SHA256SUMS
+      - name: Verify update identity against delivered build 4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p baseline
+          gh release download buds3-lights-4 --pattern Gadgetbridge-buds3-lights.apk --dir baseline
+          docker run --rm --entrypoint /bin/bash \
+            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            codeberg.org/freeyourgadget/android-fdroid-tools@sha256:344343fcf5ff939842b4ea36597a693f036dbe4c6fea787b8c97263877edf8ed \
+            -c 'tools="$(find /opt/android-sdk/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"; python3 tools/verify-apk-upgrade.py baseline/Gadgetbridge-buds3-lights.apk dist/Gadgetbridge-buds3-lights.apk --build-tools "$tools"' \
+            > dist/upgrade-compatibility.json
       - name: Publish prerelease
         env:
           GH_TOKEN: ${{ github.token }}

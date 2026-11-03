@@ -39,13 +39,52 @@ On:  FD 04 00 8E 01 B6 28 DD
 Only the GALAXY_BUDS3_PRO device type can send these actions.
 No light command is persisted or replayed automatically on connection.
 
-First hardware check
-Keep both earbuds outside the case and your ears, each above 30% battery.
-First turn the lights on using the normal pinch-and-hold gesture, then
-try Turn off. Next try Turn on (experimental) with the lights off.
-Check the physical LEDs and the last reported state separately.
-If On is ignored, record the firmware version and Gadgetbridge log.
-Do not assume changing lighting style alone powers the LEDs on.
+Debugging update
+The user confirmed Turn off works on physical earbuds. Turn on is still an
+experiment; this update supplies tools to investigate it.
+
+Open Buds3 Pro settings > Blade lights > Light debugger and packet capture.
+- See timestamped RX chunks, complete checksum-verified frames, queued TX
+  bytes, flags, payloads, generic ACK/result fields and rejected frames.
+- RFCOMM fragmentation and combined frames are handled for Buds3 Pro.
+- Compare the last two lighting frames, last TX and last response.
+- Mark a manual gesture, physical LEDs ON/OFF, firmware and wearing/case notes.
+- Preview custom 8E packets, including their calculated length and CRC.
+- Try payload presets, empty or multi-byte payloads, all byte values, and
+  request 00 versus response 20 header variants. These are hypotheses.
+- Run repeated ON, OFF then ON, style then ON, ON then style, and
+  OFF/style/ON sequences with adjustable spacing.
+- Sweep 8E values 00..0F or the complete 00..FF range. Full sweeps use at
+  least 1000 ms spacing. Pending sends can be cancelled. A new normal ON
+  report stops a run by default; that stop condition can be disabled.
+- Query firmware/build information with existing read commands 24 and 28.
+- Copy, share, or save the report. Capture is bounded to 1200 entries and
+  180000 characters, lives in memory, and reports dropped entries. Export
+  it before the app process ends. Reports include raw device payloads.
+- Leaving the debugger, disconnecting, or disposing the connection cancels
+  pending experiment steps. Already queued frames cannot be recalled.
+- Debug requests snapshot their options rather than reading a mutable
+  command preference when an asynchronous intent eventually arrives.
+
+Useful first capture
+1. Clear capture, then mark that you are about to pinch and hold.
+2. Turn lights on with the normal gesture, then mark physically visible ON.
+3. Send Turn off, mark physically OFF, then try an ON candidate.
+4. Mark the actual result and save the report. The report separates physical
+   observations, device reports, ACKs and submitted commands.
+Keep both earbuds outside your ears and above 30% battery for the first run.
+The editor only targets lighting command 8E. Other available test commands
+are touch-settings 90 and firmware reads 24/28; no reset/FOTA opcode sweep.
+
+Update compatibility
+Package ID remains nodomain.freeyourgadget.gadgetbridge.buds3lights.
+The signing key is the same one used for build 4. Version code increases.
+Install the new APK over build 4, keeping application data and pairings.
+The release contains upgrade-compatibility.json. Publication is blocked
+unless signatures verify, certificate/package match the exact delivered
+build 4 APK, minimum Android version does not rise, native ABI is ARM64,
+and the new version code is greater. The APK file hash changes normally.
+Phone installation is not claimed by this package-compatibility check.
 
 Build
 GitHub Actions builds only the mainline nightly Android APK using upstream's

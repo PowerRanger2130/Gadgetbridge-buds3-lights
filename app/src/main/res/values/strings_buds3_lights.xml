@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="galaxy_buds_3_pro_debug">Light debugger and packet capture</string>
+    <string name="galaxy_buds_3_pro_debug_summary">Capture manual gestures and responses, test payloads and sequences, and export a report.</string>
     <string name="galaxy_buds_3_pro_blade_lights">Blade lights</string>
     <string name="galaxy_buds_3_pro_lights_on">Turn on (experimental)</string>
     <string name="galaxy_buds_3_pro_lights_on_summary">Try turning on both blade lights. Keep both earbuds outside your ears and above 30% battery. Some firmware may ignore this command.</string>

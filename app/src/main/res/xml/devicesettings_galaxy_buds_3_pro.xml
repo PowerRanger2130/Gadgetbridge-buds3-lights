@@ -7,6 +7,11 @@
         android:persistent="false"
         android:title="@string/galaxy_buds_3_pro_blade_lights">
         <Preference
+            android:key="buds3_debug_open"
+            android:persistent="false"
+            android:title="@string/galaxy_buds_3_pro_debug"
+            android:summary="@string/galaxy_buds_3_pro_debug_summary" />
+        <Preference
             android:key="pref_galaxy_buds_3_pro_lights_on"
             android:persistent="false"
             android:title="@string/galaxy_buds_3_pro_lights_on"

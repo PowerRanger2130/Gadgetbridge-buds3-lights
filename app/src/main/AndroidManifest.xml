@@ -833,6 +833,10 @@
             dialog when changing orientation
         -->
         <activity
+            android:name=".activities.galaxybuds.Buds3LightDebugActivity"
+            android:exported="false"
+            android:label="@string/galaxy_buds_3_pro_debug" />
+        <activity
             android:name=".activities.debug.DebugActivityV2"
             android:label="@string/title_activity_debug"
             android:parentActivityName=".activities.ControlCenterv2"

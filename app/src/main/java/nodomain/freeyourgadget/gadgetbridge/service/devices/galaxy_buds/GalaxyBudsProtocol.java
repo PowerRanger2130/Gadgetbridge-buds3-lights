@@ -62,6 +62,7 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
     private byte EndOfMessage = EOM_BUDS;
 
     private boolean isFirstExchange = true;
+    private final Buds3LightDiagnostics.Stream buds3Stream = new Buds3LightDiagnostics.Stream();
 
     //incoming
     private static final byte battery_status = (byte) 0x60;
@@ -180,10 +181,28 @@ public class GalaxyBudsProtocol extends GBDeviceProtocol {
 
     @Override
     public GBDeviceEvent[] decodeResponse(byte[] responseData) {
-        if (getDevice().getType() == DeviceType.GALAXY_BUDS3_PRO
-                && responseData.length >= 4 && responseData[3] == buds3_lighting_sync) {
-            return decodeBladeLights(responseData);
+        if (getDevice().getType() != DeviceType.GALAXY_BUDS3_PRO) {
+            return decodePacket(responseData);
         }
+        final Buds3LightDiagnostics diagnostics = Buds3LightDiagnostics.forDevice(getDevice().getAddress());
+        diagnostics.rxChunk(responseData);
+        final List<GBDeviceEvent> events = new ArrayList<>();
+        for (byte[] frame : buds3Stream.accept(responseData, diagnostics::invalid)) {
+            diagnostics.received(frame);
+            try {
+                final GBDeviceEvent[] decoded = frame[3] == buds3_lighting_sync
+                        ? decodeBladeLights(frame) : decodePacket(frame);
+                if (decoded != null) events.addAll(Arrays.asList(decoded));
+            } catch (RuntimeException exception) {
+                diagnostics.invalid("Decoder: " + exception.getClass().getSimpleName());
+            }
+        }
+        return events.toArray(new GBDeviceEvent[0]);
+    }
+
+    public void resetLightStream() { buds3Stream.clear(); }
+
+    private GBDeviceEvent[] decodePacket(final byte[] responseData) {
         List<GBDeviceEvent> devEvts = new ArrayList<>();
         LOG.debug("received data: " + hexdump(responseData));
         LOG.debug("received data length: " + responseData.length);

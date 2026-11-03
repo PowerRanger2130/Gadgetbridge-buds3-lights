@@ -44,6 +44,7 @@ import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.Dev
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_GALAXY_BUDS_3_PRO_LIGHTS_STATE_TIME;
 
 import android.os.Parcel;
+import android.content.Intent;
 
 import androidx.preference.Preference;
 
@@ -54,6 +55,8 @@ import java.util.Date;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.galaxybuds.Buds3LightDebugActivity;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.galaxy_buds.Buds3LightDiagnostics;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsCustomizer;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsHandler;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -99,6 +102,14 @@ public class GalaxyBudsSettingsCustomizer implements DeviceSpecificSettingsCusto
 
     @Override
     public void customizeSettings(final DeviceSpecificSettingsHandler handler, Prefs prefs, final String rootKey) {
+        final Preference debugger = handler.findPreference(Buds3LightDiagnostics.OPEN);
+        if (debugger != null) {
+            debugger.setOnPreferenceClickListener(preference -> {
+                handler.getContext().startActivity(new Intent(handler.getContext(), Buds3LightDebugActivity.class)
+                        .putExtra(GBDevice.EXTRA_DEVICE, device));
+                return true;
+            });
+        }
         for (final String key : new String[]{PREF_GALAXY_BUDS_3_PRO_LIGHTS_ON, PREF_GALAXY_BUDS_3_PRO_LIGHTS_OFF}) {
             final Preference action = handler.findPreference(key);
             if (action != null) {
