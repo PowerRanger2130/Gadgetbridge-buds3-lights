@@ -7,7 +7,8 @@ License: AGPL-3.0, unchanged. The complete corresponding source and a patch
 against the base commit accompany the APK in this release.
 
 Install
-The APK uses nodomain.freeyourgadget.gadgetbridge.buds3lights, so it can be
+This preview APK targets ARM64 Android phones, Android 6.0 or newer.
+It uses nodomain.freeyourgadget.gadgetbridge.buds3lights, so it can be
 installed alongside upstream Gadgetbridge. It uses this fork's dedicated
 signing key, not upstream's certificate. Later builds from this repository
 use the same key. Its database and device preferences are separate.
